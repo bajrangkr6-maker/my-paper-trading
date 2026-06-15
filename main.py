@@ -9,12 +9,12 @@ import os
 
 app = FastAPI()
 
-# Templates directory config
+# Templates folder configuration (Render safe path)
 current_dir = os.path.dirname(os.path.abspath(__file__))
 templates_dir = os.path.join(current_dir, "templates")
 templates = Jinja2Templates(directory=templates_dir)
 
-# Database Config (Live Server Safe)
+# Database Setup (Temporary folder use kar rahe hain taaki live server permission error na de)
 DATABASE_URL = "sqlite:////tmp/live_paper_trading.db"
 engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -27,21 +27,26 @@ class TradeLog(Base):
     symbol = Column(String, nullable=False)
     qty = Column(Integer, nullable=False)
     buy_price = Column(Float, nullable=False)
-    sell_price = Column(Float, nullable=True)
-    status = Column(String, default="OPEN")
+    sell_price = Column(Float, nullable=True) # Open trade ke liye null rahega
+    status = Column(String, default="OPEN") # OPEN ya CLOSED
     timestamp = Column(DateTime, default=datetime.utcnow)
 
 class UserWallet(Base):
     __tablename__ = "user_wallet"
     id = Column(Integer, primary_key=True, index=True)
-    balance = Column(Float, default=1000000.0)
+    balance = Column(Float, default=1000000.0) # 10 Lakh Virtual Cash
 
+# Database Tables Create Karna
 Base.metadata.create_all(bind=engine)
 
 # ---- ROUTES ----
+
+# 1. Main Dashboard Route
 @app.get("/", response_class=HTMLResponse)
 def read_dashboard(request: Request):
     db = SessionLocal()
+    
+    # Check karenge ki wallet pehle se bana hai ya nahi
     wallet = db.query(UserWallet).first()
     if not wallet:
         wallet = UserWallet(balance=1000000.0)
@@ -49,18 +54,20 @@ def read_dashboard(request: Request):
         db.commit()
         db.refresh(wallet)
     
+    # Saare trades nikalenge
     trades = db.query(TradeLog).order_by(TradeLog.id.desc()).all()
     db.close()
     
-    # Context dictionary ko alag se define kiya taaki Jinja2 error na de
+    # Context data dictionary
     context_data = {
-        "request": request, 
         "balance": wallet.balance, 
         "trades": trades
     }
     
-    return templates.TemplateResponse(name="dashboard.html", context=context_data)
+    # FastAPI naye version ke mutabik 'request' ko pehle position par bheja hai
+    return templates.TemplateResponse(request, "dashboard.html", context_data)
 
+# 2. Buy/Sell Order Execution Route
 @app.post("/api/trade")
 def execute_paper_trade(data: dict):
     db = SessionLocal()
@@ -71,7 +78,7 @@ def execute_paper_trade(data: dict):
 
     if not symbol or qty <= 0 or current_market_price <= 0:
         db.close()
-        return {"status": "Error", "message": "Galat data bhara hai!"}
+        return {"status": "Error", "message": "Kripya saari fields sahi se bharein!"}
 
     wallet = db.query(UserWallet).first()
     total_value = qty * current_market_price
@@ -81,20 +88,23 @@ def execute_paper_trade(data: dict):
             db.close()
             return {"status": "Error", "message": "Paisa kam hai! Insufficient Funds."}
         
+        # Balance minus karo aur naya trade open karo
         wallet.balance -= total_value
         new_trade = TradeLog(symbol=symbol, qty=qty, buy_price=current_market_price, status="OPEN")
         db.add(new_trade)
     
     elif action == "SELL":
+        # Check karenge ki us stock ki koi open position hai ya nahi
         open_position = db.query(TradeLog).filter(TradeLog.symbol == symbol, TradeLog.status == "OPEN").first()
         if not open_position:
             db.close()
             return {"status": "Error", "message": "Aapke paas is stock ki koi open holding nahi hai!"}
         
+        # Balance plus karo aur position close karo
         wallet.balance += total_value
         open_position.sell_price = current_market_price
         open_position.status = "CLOSED"
     
     db.commit()
     db.close()
-    return {"status": "Success", "message": f"Virtual {action} successful!"}
+    return {"status": "Success", "message": f"Virtual {action} Order executed successfully!"}
