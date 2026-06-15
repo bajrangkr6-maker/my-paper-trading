@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login to Kite Paper Trading</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-50 flex flex-col justify-between h-screen text-gray-600">
+
+    <div></div> <div class="w-full max-w-[400px] mx-auto p-8 bg-white border border-gray-200 shadow-sm rounded border-t-4 border-orange-500">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-black tracking-tight text-orange-500 flex items-center justify-center gap-1">
+                KITE <span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded font-normal">PAPER</span>
+            </h1>
+            <p class="text-sm text-gray-400 mt-2">Connect Upstox Token to Start</p>
+        </div>
+
+        <form action="/save_token" method="POST" class="space-y-6">
+            <div>
+                <label class="block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                    Upstox Access Token
+                </label>
+                <input type="text" name="token" placeholder="Paste today's access token..." required 
+                       class="w-full px-4 py-3 border border-gray-200 rounded text-sm font-mono focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition">
+            </div>
+
+            <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-white font-semibold py-3 px-4 rounded text-sm transition uppercase shadow-sm">
+                Login / Connect Live
+            </button>
+
+            <div class="text-center pt-2">
+                <a href="https://developer.upstox.com/" target="_blank" class="text-xs text-blue-500 hover:underline">
+                    How to get Upstox Access Token?
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <div class="text-center py-6 border-t border-gray-100 bg-white w-full">
+        <p class="text-xs text-gray-400">Zerodha Kite Clone for Paper Trading. Powered by Upstox API.</p>
+    </div>
+
+</body>
+</html>
