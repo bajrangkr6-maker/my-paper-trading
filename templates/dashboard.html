@@ -2,122 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Live Kite Paper Trading Console</title>
+    <title>Kite Paper Trading - Dashboard</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 </head>
-<body class="bg-gray-50 font-sans flex h-screen text-gray-900">
+<body class="bg-gray-900 text-white flex flex-col items-center justify-center h-screen">
 
-    <div class="w-80 bg-white border-r border-gray-200 flex flex-col">
-        <div class="p-4 border-b border-gray-200 bg-gray-900 text-white font-bold">
-            Upstox Live Market
+    <div class="bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-700 text-center max-w-sm w-full">
+        <div class="flex justify-between items-center mb-4 border-b border-gray-700 pb-2">
+            <span class="text-xs bg-green-500/20 text-green-400 px-2 py-0.5 rounded-full font-bold animate-pulse">● Live</span>
+            <span class="text-xs text-gray-400 font-mono">Upstox API</span>
         </div>
-        <div class="p-3">
-            <input type="text" placeholder="Search Stocks/Options..." class="w-full p-2 border rounded text-sm focus:outline-none focus:border-orange-500">
-        </div>
-        <div class="flex-1 overflow-y-auto p-2 space-y-2">
-            <div class="p-3 bg-gray-50 border rounded flex justify-between items-center hover:border-orange-500 cursor-pointer">
-                <div>
-                    <h4 class="font-bold text-sm">NIFTY 25 JUN 23600 CE</h4>
-                    <p class="text-xs text-gray-400">Options</p>
-                </div>
-                <span class="text-sm font-bold text-green-600">₹168.45</span>
-            </div>
-        </div>
-    </div>
-
-    <div class="flex-1 flex flex-col overflow-hidden">
-        <div class="h-16 bg-white border-b border-gray-200 flex justify-between items-center px-6 shadow-sm">
-            <h2 class="text-lg font-bold text-gray-700">Paper Trading Terminal</h2>
-            <div class="flex items-center space-x-6">
-                <span class="text-sm font-semibold text-gray-600">Available Funds: <strong class="text-gray-900">₹{{ "%.2f"|format(balance) }}</strong></span>
-            </div>
+        
+        <h1 class="text-xl font-semibold text-gray-400 uppercase tracking-wider mb-2">Market Watch</h1>
+        
+        <div class="my-6">
+            <p class="text-2xl font-bold text-orange-500">{{ stock }}</p>
+            <p class="text-4xl font-extrabold mt-2 text-green-400">
+                {% if price is number %} ₹{{ price }} {% else %} {{ price }} {% endif %}
+            </p>
         </div>
 
-        <div class="p-6 flex-1 overflow-y-auto space-y-6">
-            
-            <div class="bg-white p-6 rounded-xl border border-gray-200 max-w-xl shadow-sm">
-                <h3 class="font-bold text-sm text-gray-400 uppercase tracking-wider mb-4">Quick Trade Order</h3>
-                <div class="grid grid-cols-3 gap-4 mb-4">
-                    <input id="symbol" type="text" placeholder="RELIANCE / NIFTY CE" class="p-2 border rounded text-sm focus:outline-none">
-                    <input id="qty" type="number" placeholder="Quantity" class="p-2 border rounded text-sm focus:outline-none">
-                    <input id="price" type="number" placeholder="Price (Live)" class="p-2 border rounded text-sm focus:outline-none">
-                </div>
-                <div class="flex space-x-4">
-                    <button onclick="placeOrder('BUY')" class="flex-1 bg-blue-600 text-white font-bold py-2 rounded text-sm hover:bg-blue-700 transition">BUY (Long)</button>
-                    <button onclick="placeOrder('SELL')" class="flex-1 bg-red-600 text-white font-bold py-2 rounded text-sm hover:bg-red-700 transition">SELL (Short/Exit)</button>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div class="bg-gray-50 border-b border-gray-200 px-6 py-3">
-                    <h3 class="font-bold text-gray-700">Trade Book & P&L Review</h3>
-                </div>
-                <div class="p-6">
-                    <table class="w-full text-left text-sm text-gray-600">
-                        <thead>
-                            <tr class="border-b border-gray-200 text-xs font-semibold text-gray-400 uppercase bg-gray-50">
-                                <th class="p-3">Date/Time</th>
-                                <th class="p-3">Symbol</th>
-                                <th class="p-3">Qty</th>
-                                <th class="p-3">Buy Price</th>
-                                <th class="p-3">Sell Price</th>
-                                <th class="p-3">Status</th>
-                                <th class="p-3 text-right">Net P&L</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            {% for trade in trades %}
-                            <tr>
-                                <td class="p-3 text-xs text-gray-400">{{ trade.timestamp.strftime('%d-%b %H:%M') }}</td>
-                                <td class="p-3 font-bold text-gray-800">{{ trade.symbol }}</td>
-                                <td class="p-3">{{ trade.qty }}</td>
-                                <td class="p-3">₹{{ trade.buy_price }}</td>
-                                <td class="p-3">{% if trade.sell_price %}₹{{ trade.sell_price }}{% else %}-{% endif %}</td>
-                                <td class="p-3">
-                                    <span class="px-2 py-0.5 text-xs rounded-full font-medium {% if trade.status == 'OPEN' %}bg-green-50 text-green-600{% else %}bg-gray-100 text-gray-600{% endif %}">
-                                        {{ trade.status }}
-                                    </span>
-                                </td>
-                                <td class="p-3 text-right font-bold {% if trade.sell_price and (trade.sell_price - trade.buy_price) >= 0 %}text-green-600{% elif trade.sell_price %}text-red-600{% else %}text-gray-500{% endif %}">
-                                    {% if trade.sell_price %}
-                                        ₹{{ "%.2f"|format((trade.sell_price - trade.buy_price) * trade.qty) }}
-                                    {% else %}
-                                        Live tracking...
-                                    {% endif %}
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
+        <div class="flex gap-4">
+            <button onclick="window.location.reload()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-medium py-2 rounded-lg transition text-sm">
+                Refresh
+            </button>
+            <a href="/logout" class="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white font-medium py-2 px-4 rounded-lg transition text-sm">
+                Logout
+            </button>
         </div>
     </div>
 
-    <script>
-        function placeOrder(actionType) {
-            const symbol = document.getElementById('symbol').value;
-            const qty = document.getElementById('qty').value;
-            const price = document.getElementById('price').value;
-
-            if(!symbol || !qty || !price) { alert("Sari fields bharna zaroori hai!"); return; }
-
-            fetch('/api/trade', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ symbol, qty, price, action: actionType })
-            })
-            .then(res => {
-                if(!res.ok) return res.json().then(err => { throw err; });
-                return res.json();
-            })
-            .then(data => {
-                alert(data.message);
-                window.location.reload();
-            })
-            .catch(err => alert(err.detail || "Kuch galat hua!"));
-        }
-    </script>
 </body>
 </html>
